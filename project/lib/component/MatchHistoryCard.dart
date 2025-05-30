@@ -133,6 +133,21 @@ class MatchCard extends StatelessWidget {
     final kills = userData['kills'];
     final deaths = userData['deaths'];
     final assists = userData['assists'];
+    final Map<String, String> spellIdToImageKey = {
+      "1": "SummonerBoost",
+      "3": "SummonerExhaust",
+      "4": "SummonerFlash",
+      "6": "SummonerHaste",
+      "7": "SummonerHeal",
+      "11": "SummonerSmite",
+      "12": "SummonerTeleport",
+      "14": "SummonerIgnite",
+      "21": "SummonerBarrier",
+      "32": "SummonerSnowball",
+    };
+
+    final spell1Key = spellIdToImageKey[userData['summoner1Id'].toString()]!;
+    final spell2Key = spellIdToImageKey[userData['summoner2Id'].toString()]!;
 
     return Column(
       children: [
@@ -158,6 +173,27 @@ class MatchCard extends StatelessWidget {
         Text(
           '$kills / $deaths / $assists',
           style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+        ),
+
+        const SizedBox(height: 4),
+        // 오른쪽: 스펠 및 룬
+        Column(
+          children: [
+            // 스펠
+            Image.network(
+              'https://ddragon.leagueoflegends.com/cdn/15.11.1/img/spell/$spell1Key.png',
+              width: 22,
+              height: 22,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 4),
+            Image.network(
+              'https://ddragon.leagueoflegends.com/cdn/15.11.1/img/spell/$spell2Key.png',
+              width: 22,
+              height: 22,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+          ],
         ),
       ],
     );
@@ -307,4 +343,6 @@ class MatchCard extends StatelessWidget {
       }).toList(),
     );
   }
+
+
 }
