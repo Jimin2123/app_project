@@ -18,36 +18,59 @@ class MatchCard extends StatelessWidget {
       orElse: () => throw Exception("사용자 정보를 찾을 수 없습니다."),
     );
     final isWin = userData['win'] == true;
-    final cardColor = isWin ? Colors.blue[800] : Colors.red[800];
+
+    // 🎨 배경색 설정
+    final cardColor = isWin ? const Color(0xFF1E2D4F) : const Color(0xFFB34357);
 
     return Card(
       color: cardColor,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeaderSection(match, userData),
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildChampionSection(userData),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildKDASection(userData),
-                      const SizedBox(height: 6),
-                      _buildItemRowSection(userData),
-                    ],
-                  ),
-                ),
-              ],
+            // ✅ Header는 분리된 Box
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.black12,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: _buildHeaderSection(match, userData),
             ),
+            const SizedBox(height: 12),
+
+            // ✅ 본문 카드
+            Card(
+              color: Colors.black26,
+              elevation: 1,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildChampionSection(userData),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildKDASection(userData),
+                          const SizedBox(height: 6),
+                          _buildDamageGraphSection(userData),
+                          const SizedBox(height: 6),
+                          _buildItemRowSection(userData),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
             const SizedBox(height: 12),
             _buildTeamSection(participants),
           ],
@@ -55,6 +78,7 @@ class MatchCard extends StatelessWidget {
       ),
     );
   }
+
 
   Widget _buildHeaderSection(Map<String, dynamic> match, Map<String, dynamic> userData) {
     final gameMode = match['info']['gameMode'];
@@ -87,10 +111,18 @@ class MatchCard extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(gameMode, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        Text(timeAgo, style: const TextStyle(color: Colors.white70)),
-        Text('${isWin ? "승리" : "패배"} | ${minutes}분 ${seconds}초',
-            style: const TextStyle(color: Colors.white)),
+        Text(
+          gameMode,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        Text(
+          timeAgo,
+          style: const TextStyle(color: Colors.white70, fontSize: 13),
+        ),
+        Text(
+          '${isWin ? "승리" : "패배"} | ${minutes}분 ${seconds}초',
+          style: const TextStyle(color: Colors.white, fontSize: 13),
+        ),
       ],
     );
   }
@@ -125,7 +157,7 @@ class MatchCard extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           '$kills / $deaths / $assists',
-          style: const TextStyle(color: Colors.white, fontSize: 12),
+          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -200,7 +232,7 @@ class MatchCard extends StatelessWidget {
   }
 
   Widget _buildDamageGraphSection(Map<String, dynamic> userData) {
-    final damageDealt = userData['totalDamageDealt'] ?? 0;
+    final damageDealt = userData['totalDamageDealtToChampions'] ?? 0;
     final damageTaken = userData['totalDamageTaken'] ?? 0;
 
     final maxValue = (damageDealt > damageTaken) ? damageDealt : damageTaken;
@@ -231,18 +263,6 @@ class MatchCard extends StatelessWidget {
             color: Colors.blueAccent,
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildStatsAndDamageSection(Map<String, dynamic> userData) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: _buildKDASection(userData)),
-        const SizedBox(width: 12),
-        _buildDamageGraphSection(userData),
       ],
     );
   }
