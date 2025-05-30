@@ -16,7 +16,7 @@ class SummonerInfoCard extends StatelessWidget {
         child: Row(
           children: [
             Image.network(
-              'https://ddragon.leagueoflegends.com/cdn/14.10.1/img/profileicon/${summoner['profileIconId']}.png',
+              'https://ddragon.leagueoflegends.com/cdn/15.11.1/img/profileicon/${summoner['profileIconId']}.png',
               width: 60,
               height: 60,
             ),

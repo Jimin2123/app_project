@@ -26,105 +26,89 @@ class MatchCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(8),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildGameInfoSection(match, userPuuid),
-            const SizedBox(width: 12),
-            _buildChampionAndSpellSection(match, userPuuid),
-            const SizedBox(width: 12),
-            _buildKDASection(match, userPuuid),
+            _buildHeaderSection(match, userData),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildChampionSection(userData),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildKDASection(userData),
+                      const SizedBox(height: 6),
+                      _buildItemRowSection(userData),
+                    ],
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
-            _buildTeamSection(match),
+            _buildTeamSection(participants),
           ],
         ),
       ),
     );
   }
 
-  // 게임 정보 섹션
-  Widget _buildGameInfoSection(Map<String, dynamic> match, String userPuuid) {
+  Widget _buildHeaderSection(Map<String, dynamic> match, Map<String, dynamic> userData) {
     final gameMode = match['info']['gameMode'];
     final gameEndTimestamp = match['info']['gameEndTimestamp'];
     final gameDuration = match['info']['gameDuration'];
-
-    final participants = match['info']['participants'] as List;
-    final userData = participants.firstWhere(
-          (p) => p['puuid'] == userPuuid,
-      orElse: () => throw Exception("사용자 정보를 찾을 수 없습니다."),
-    );
     final isWin = userData['win'] == true;
 
     final now = DateTime.now().millisecondsSinceEpoch;
-    final minutesAgo = ((now - gameEndTimestamp) / (1000 * 60)).round();
+    final diffMillis = now - gameEndTimestamp;
+    final diffSeconds = (diffMillis / 1000).round();
+    final diffMinutes = (diffSeconds / 60).round();
+    final diffHours = (diffMinutes / 60).round();
+    final diffDays = (diffHours / 24).round();
+
+    String timeAgo;
+    if (diffSeconds < 60) {
+      timeAgo = '$diffSeconds초 전';
+    } else if (diffMinutes < 60) {
+      timeAgo = '$diffMinutes분 전';
+    } else if (diffHours < 24) {
+      timeAgo = '$diffHours시간 전';
+    } else {
+      timeAgo = '$diffDays일 전';
+    }
+
     final duration = Duration(seconds: gameDuration);
     final minutes = duration.inMinutes;
     final seconds = duration.inSeconds % 60;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          gameMode,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '$minutesAgo시간 전',
-          style: const TextStyle(color: Colors.white70, fontSize: 12),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Text(
-              isWin ? '승리' : '패배',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              '$minutes분 ${seconds}초',
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
-            ),
-          ],
-        )
+        Text(gameMode, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        Text(timeAgo, style: const TextStyle(color: Colors.white70)),
+        Text('${isWin ? "승리" : "패배"} | ${minutes}분 ${seconds}초',
+            style: const TextStyle(color: Colors.white)),
       ],
     );
   }
 
-  // 챔피언 정보 섹션
-  Widget _buildChampionAndSpellSection(Map<String, dynamic> match, String userPuuid) {
-    final participants = match['info']['participants'] as List;
-    final userData = participants.firstWhere(
-          (p) => p['puuid'] == userPuuid,
-      orElse: () => throw Exception("사용자 정보를 찾을 수 없습니다."),
-    );
-
+  Widget _buildChampionSection(Map<String, dynamic> userData) {
     final championName = userData['championName'];
     final champLevel = userData['champLevel'];
     final kills = userData['kills'];
     final deaths = userData['deaths'];
     final assists = userData['assists'];
-    final cs = userData['totalMinionsKilled'];
 
-    final kda = deaths == 0 ? (kills + assists).toString() : ((kills + assists) / deaths).toStringAsFixed(2);
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
       children: [
-        // 왼쪽: 챔피언 이미지 + 레벨
         Stack(
           alignment: Alignment.bottomRight,
           children: [
             Image.network(
-              'https://ddragon.leagueoflegends.com/cdn/14.10.1/img/champion/$championName.png',
+              'https://ddragon.leagueoflegends.com/cdn/15.11.1/img/champion/$championName.png',
               width: 48,
               height: 48,
             ),
@@ -138,53 +122,35 @@ class MatchCard extends StatelessWidget {
             ),
           ],
         ),
-
-        const SizedBox(width: 12),
-
-        // 오른쪽: 스탯 정보 + 아이템
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('$kills / $deaths / $assists', style: const TextStyle(color: Colors.white, fontSize: 16)),
-            Text('KDA: $kda  •  CS: $cs  •  레벨 $champLevel', style: const TextStyle(color: Colors.white70, fontSize: 12)),
-            const SizedBox(height: 6),
-            _buildItemRowSection(userData), // ✅ 아이템, MVP 태그 등
-          ],
+        const SizedBox(height: 4),
+        Text(
+          '$kills / $deaths / $assists',
+          style: const TextStyle(color: Colors.white, fontSize: 12),
         ),
       ],
     );
   }
 
-  // KDA 관련 섹션
-  Widget _buildKDASection(Map<String, dynamic> match, String userPuuid) {
-    final participants = match['info']['participants'] as List;
-    final userData = participants.firstWhere(
-          (p) => p['puuid'] == userPuuid,
-      orElse: () => throw Exception("사용자 정보를 찾을 수 없습니다."),
-    );
-
+  Widget _buildKDASection(Map<String, dynamic> userData) {
     final kills = userData['kills'];
     final deaths = userData['deaths'];
     final assists = userData['assists'];
-    final kda = deaths == 0 ? (kills + assists).toString() : ((kills + assists) / deaths).toStringAsFixed(2);
     final cs = userData['totalMinionsKilled'] + userData['neutralMinionsKilled'];
+    final kda = deaths == 0 ? (kills + assists).toString() : ((kills + assists) / deaths).toStringAsFixed(2);
     final killParticipation = (userData['challenges']?['killParticipation'] ?? 0.0) * 100;
     final lane = userData['teamPosition'] ?? 'NONE';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('KDA: $kda  •  CS: $cs',
-            style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        Text('KDA: $kda  •  CS: $cs', style: const TextStyle(color: Colors.white70, fontSize: 12)),
         const SizedBox(height: 4),
-        Text('킬관여율: ${killParticipation.toStringAsFixed(0)}%  •  포지션: $lane',
-            style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        Text('킬관여율: ${killParticipation.toStringAsFixed(0)}%  •  포지션: $lane', style: const TextStyle(color: Colors.white70, fontSize: 12)),
       ],
     );
   }
 
   Widget _buildItemRowSection(Map<String, dynamic> userData) {
-    // 아이템 ID (0은 빈 슬롯)
     final itemIds = List.generate(7, (i) => userData['item$i'] ?? 0);
 
     return Row(
@@ -204,7 +170,7 @@ class MatchCard extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 2),
           child: Image.network(
-            'https://ddragon.leagueoflegends.com/cdn/14.10.1/img/item/$id.png',
+            'https://ddragon.leagueoflegends.com/cdn/15.11.1/img/item/$id.png',
             width: 28,
             height: 28,
             errorBuilder: (_, __, ___) => Container(
@@ -219,26 +185,71 @@ class MatchCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTeamSection(Map<String, dynamic> match) {
-    final participants = match['info']['participants'] as List;
-
-    // 팀 나누기
+  Widget _buildTeamSection(List<dynamic> participants) {
     final blueTeam = participants.where((p) => p['teamId'] == 100).toList();
     final redTeam = participants.where((p) => p['teamId'] == 200).toList();
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildTeamColumn(blueTeam),
-        _buildTeamColumn(redTeam),
+        _buildTeamColumn(blueTeam, CrossAxisAlignment.start),
+        _buildTeamColumn(redTeam, CrossAxisAlignment.end),
       ],
     );
   }
 
-  Widget _buildTeamColumn(List<dynamic> team) {
+  Widget _buildDamageGraphSection(Map<String, dynamic> userData) {
+    final damageDealt = userData['totalDamageDealt'] ?? 0;
+    final damageTaken = userData['totalDamageTaken'] ?? 0;
+
+    final maxValue = (damageDealt > damageTaken) ? damageDealt : damageTaken;
+    final dealtRatio = maxValue == 0 ? 0.0 : damageDealt / maxValue;
+    final takenRatio = maxValue == 0 ? 0.0 : damageTaken / maxValue;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('딜량: $damageDealt', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        Container(
+          width: 120,
+          height: 8,
+          margin: const EdgeInsets.only(bottom: 6),
+          child: LinearProgressIndicator(
+            value: dealtRatio,
+            backgroundColor: Colors.white24,
+            color: Colors.redAccent,
+          ),
+        ),
+        Text('받은 피해량: $damageTaken', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        Container(
+          width: 120,
+          height: 8,
+          child: LinearProgressIndicator(
+            value: takenRatio,
+            backgroundColor: Colors.white24,
+            color: Colors.blueAccent,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatsAndDamageSection(Map<String, dynamic> userData) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _buildKDASection(userData)),
+        const SizedBox(width: 12),
+        _buildDamageGraphSection(userData),
+      ],
+    );
+  }
+
+  Widget _buildTeamColumn(List<dynamic> team, CrossAxisAlignment alignment) {
+    return Column(
+      crossAxisAlignment: alignment,
       children: team.map((player) {
         final champion = player['championName'];
         final name = player['riotIdGameName'] ?? 'Unknown';
@@ -246,15 +257,30 @@ class MatchCard extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 2),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: alignment == CrossAxisAlignment.end
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
             children: [
-              Image.network(
-                'https://ddragon.leagueoflegends.com/cdn/14.10.1/img/champion/$champion.png',
-                width: 20,
-                height: 20,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
-              const SizedBox(width: 6),
-              Text(name, style: const TextStyle(color: Colors.white, fontSize: 12)),
+              if (alignment == CrossAxisAlignment.start) ...[
+                Image.network(
+                  'https://ddragon.leagueoflegends.com/cdn/15.11.1/img/champion/$champion.png',
+                  width: 20,
+                  height: 20,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+                const SizedBox(width: 6),
+                Text(name, style: const TextStyle(color: Colors.white, fontSize: 12)),
+              ] else ...[
+                Text(name, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                const SizedBox(width: 6),
+                Image.network(
+                  'https://ddragon.leagueoflegends.com/cdn/15.11.1/img/champion/$champion.png',
+                  width: 20,
+                  height: 20,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ],
             ],
           ),
         );

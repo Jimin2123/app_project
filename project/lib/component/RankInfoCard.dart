@@ -23,7 +23,7 @@ class RankInfoCard extends StatelessWidget {
         child: Row(
           children: [
             Image.asset(
-              'assets/tier/$tier.webp',
+              'assets/tier/${tier.toString().toLowerCase().trim()}.webp',
               width: 60,
               height: 60,
             ),
