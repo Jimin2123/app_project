@@ -56,6 +56,16 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - .env
+    - assets/tier/iron.webp
+    - assets/tier/bronze.webp
+    - assets/tier/silver.webp
+    - assets/tier/gold.webp
+    - assets/tier/platinum.webp
+    - assets/tier/emerald.webp
+    - assets/tier/diamond.webp
+    - assets/tier/master.webp
+    - assets/tier/grandmaster.webp
+    - assets/tier/challenger.webp
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

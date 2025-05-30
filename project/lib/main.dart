@@ -85,6 +85,8 @@ class _SummonerSearchPageState extends State<SummonerSearchPage> {
       final matchIds = await _apiService.getMatchIds(puuid);
       final matchDetails = await _apiService.getMatchDetails(matchIds);
 
+      final rankInfo = await _apiService.getRankInfo(puuid);
+
       // 4단계: 결과 페이지로 이동
       if (!mounted) return;
       Navigator.push(
@@ -94,6 +96,7 @@ class _SummonerSearchPageState extends State<SummonerSearchPage> {
               SummonerResultPage(
                 summoner: summoner,
                 matchHistory: matchDetails,
+                rankInfo: rankInfo,
               ),
         ),
       );

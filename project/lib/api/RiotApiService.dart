@@ -58,6 +58,18 @@ class RiotApiService {
     }
   }
 
+  // 엔트리 정보 가져오기
+  Future<List<Map<String, dynamic>>> getRankInfo(String puuid) async {
+    try {
+      final response = await _dioKr.get('/lol/league/v4/entries/by-puuid/$puuid}');
+
+      return List<Map<String, dynamic>>.from(response.data);
+
+    } on DioException catch (e) {
+      throw Exception('API 호출 실패 (${e.response?.statusCode ?? 0}): ${e.message}');
+    }
+  }
+
   // 소환사 매치 정보 가져오기
   Future<List<String>> getMatchIds(String puuid) async{
     try {
