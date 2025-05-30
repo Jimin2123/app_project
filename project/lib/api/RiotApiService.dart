@@ -49,13 +49,74 @@ class RiotApiService {
     }
   }
 
+  // 소환사 정보 가져오기
   Future<Map<String, dynamic>> getSummonerInfo(String puuid) async {
     try {
       final response = await _dioKr.get('/lol/summoner/v4/summoners/by-puuid/$puuid');
 
+      final matchIds = getMatchIds(puuid);
+
       return response.data;
     } on DioException catch (e) {
       throw Exception('API 호출 실패 (${e.response?.statusCode ?? 0}): ${e.message}');
+    }
+  }
+
+  // 소환사 매치 정보 가져오기
+  Future<List<String>> getMatchIds(String puuid) async{
+    try {
+      final response = await _dioAsia.get('/lol/match/v5/matches/by-puuid/${puuid}/ids');
+
+      getMatchDetail(response.data[0]);
+
+      return List<String>.from(response.data);
+    } on DioException catch (e) {
+      throw Exception('API 호출 실패 (${e.response?.statusCode ?? 0}): ${e.message}');
+    }
+  }
+
+  // 게임 내역 가져오기
+  Future<Map<String, dynamic>> getMatchDetail(String matchId) async {
+    try {
+      final response = await _dioAsia.get('/lol/match/v5/matches/$matchId');
+
+      final info = response.data['info'];
+      final participants = info['participants'];
+
+      // 예시: 전체 참가자 중 첫 번째 기준으로 요약
+      final participant = participants[0];
+
+      return {
+        'matchId': matchId,
+        'champion': participant['championName'],
+        'kills': participant['kills'],
+        'deaths': participant['deaths'],
+        'assists': participant['assists'],
+        'win': participant['win'],
+        'gameDuration': info['gameDuration'],
+        'gameMode': info['gameMode'],
+        'summonerName': participant['summonerName'],
+      };
+    } on DioException catch (e) {
+      throw Exception(
+          'getMatchDetail 실패 (${e.response?.statusCode ?? 0}): ${e.message}');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getMatchDetails(List<String> matchIds) async {
+    try {
+      final List<Map<String, dynamic>> matchList = [];
+
+      for (final id in matchIds) {
+        final detail = await getMatchDetail(id);
+        matchList.add(detail);
+      }
+
+      return matchList;
+    } on DioException catch (e) {
+      throw Exception('getMatchDetails 실패 (${e.response?.statusCode ?? 0}): ${e.message}');
+    } catch (e) {
+      throw Exception('getMatchDetails 예외 발생: $e');
     }
   }
 }
