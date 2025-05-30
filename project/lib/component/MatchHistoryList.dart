@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:project/component/MatchHistoryCard.dart';
 
 class MatchHistoryList extends StatelessWidget {
   final List<Map<String, dynamic>> matches;
+  final String userPuuid;
 
-  const MatchHistoryList({super.key, required this.matches});
+  const MatchHistoryList({
+    super.key,
+    required this.matches,
+    required this.userPuuid,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -13,19 +19,9 @@ class MatchHistoryList extends StatelessWidget {
       itemCount: matches.length,
       itemBuilder: (context, index) {
         final match = matches[index];
-        return Card(
-          color: match['win'] ? Colors.blue[700] : Colors.red[700],
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          child: ListTile(
-            title: Text(
-              '${match['champion']} - ${match['kills']}/${match['deaths']}/${match['assists']}',
-              style: const TextStyle(color: Colors.white),
-            ),
-            subtitle: Text(
-              '${match['gameMode']} / ${match['gameDuration']}초',
-              style: const TextStyle(color: Colors.white70),
-            ),
-          ),
+        return MatchCard(
+          match: match,
+          userPuuid: userPuuid,
         );
       },
     );

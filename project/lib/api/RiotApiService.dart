@@ -64,7 +64,6 @@ class RiotApiService {
       final response = await _dioKr.get('/lol/league/v4/entries/by-puuid/$puuid}');
 
       return List<Map<String, dynamic>>.from(response.data);
-
     } on DioException catch (e) {
       throw Exception('API 호출 실패 (${e.response?.statusCode ?? 0}): ${e.message}');
     }
@@ -86,23 +85,7 @@ class RiotApiService {
     try {
       final response = await _dioAsia.get('/lol/match/v5/matches/$matchId');
 
-      final info = response.data['info'];
-      final participants = info['participants'];
-
-      // 예시: 전체 참가자 중 첫 번째 기준으로 요약
-      final participant = participants[0];
-
-      return {
-        'matchId': matchId,
-        'champion': participant['championName'],
-        'kills': participant['kills'],
-        'deaths': participant['deaths'],
-        'assists': participant['assists'],
-        'win': participant['win'],
-        'gameDuration': info['gameDuration'],
-        'gameMode': info['gameMode'],
-        'summonerName': participant['summonerName'],
-      };
+      return response.data;
     } on DioException catch (e) {
       throw Exception(
           'getMatchDetail 실패 (${e.response?.statusCode ?? 0}): ${e.message}');
