@@ -1,30 +1,61 @@
+import 'dart:ui';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class RiotApiService {
-  final Dio _dio;
+  late final Dio _dioAsia;
+  late final Dio _dioKr;
 
-  RiotApiService():
-      _dio = Dio(
-        BaseOptions(
-          baseUrl: 'https://asia.api.riotgames.com',
-          headers: {
-            'X-Riot-Token': dotenv.env['RIOT_API_KEY'] ?? '',
-          }
-        )
-      );
+
+  RiotApiService() {
+    final apiKey = dotenv.env['RIOT_API_KEY'];
+    if (apiKey == null || apiKey.isEmpty) {
+      throw Exception('RIOT_API_KEY가 초기화되지 않았습니다.');
+    }
+
+    print(apiKey);
+
+    _dioAsia = Dio(BaseOptions(
+      baseUrl: 'https://asia.api.riotgames.com',
+      headers: {
+        'X-Riot-Token': apiKey,
+      },
+    ));
+
+    _dioKr = Dio(BaseOptions(
+      baseUrl: 'https://kr.api.riotgames.com',
+      headers: {
+        'X-Riot-Token': apiKey,
+      },
+    ));
+  }
 
   // 닉네임으로 소환사 정보 가져오기
   Future<Map<String, dynamic>> getSummonerByName(String summonerName, String tagName) async {
     try {
-      final response = await _dio.get(
-        '/riot/account/v1/accounts/by-riot-id/$summonerName/$tagName',
+      final name = Uri.encodeComponent(summonerName.trim());
+      final tag = Uri.encodeComponent(tagName.trim());
+
+      final response = await _dioAsia.get(
+        '/riot/account/v1/accounts/by-riot-id/$name/$tag',
       );
+
+      final summonerInfo = getSummonerInfo(response.data['puuid']);
+
       return response.data;
     } on DioException catch (e) {
-      final statusCode = e.response?.statusCode ?? 0;
-      final message = e.response?.data.toString() ?? e.message;
-      throw Exception('API 호출 실패 ($statusCode): $message');
+      throw Exception('API 호출 실패 (${e.response?.statusCode ?? 0}): ${e.message}');
+    }
+  }
+
+  Future<Map<String, dynamic>> getSummonerInfo(String puuid) async {
+    try {
+      final response = await _dioKr.get('/lol/summoner/v4/summoners/by-puuid/$puuid');
+
+      return response.data;
+    } on DioException catch (e) {
+      throw Exception('API 호출 실패 (${e.response?.statusCode ?? 0}): ${e.message}');
     }
   }
 }
