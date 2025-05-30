@@ -41,8 +41,6 @@ class RiotApiService {
         '/riot/account/v1/accounts/by-riot-id/$name/$tag',
       );
 
-      final summonerInfo = getSummonerInfo(response.data['puuid']);
-
       return response.data;
     } on DioException catch (e) {
       throw Exception('API 호출 실패 (${e.response?.statusCode ?? 0}): ${e.message}');
@@ -54,8 +52,6 @@ class RiotApiService {
     try {
       final response = await _dioKr.get('/lol/summoner/v4/summoners/by-puuid/$puuid');
 
-      final matchIds = getMatchIds(puuid);
-
       return response.data;
     } on DioException catch (e) {
       throw Exception('API 호출 실패 (${e.response?.statusCode ?? 0}): ${e.message}');
@@ -66,8 +62,6 @@ class RiotApiService {
   Future<List<String>> getMatchIds(String puuid) async{
     try {
       final response = await _dioAsia.get('/lol/match/v5/matches/by-puuid/${puuid}/ids');
-
-      getMatchDetail(response.data[0]);
 
       return List<String>.from(response.data);
     } on DioException catch (e) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:project/api/RiotApiService.dart';
+import 'package:project/page/SummonerResultPage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // 생략되어 있었다면 추가!
@@ -69,22 +70,38 @@ class _SummonerSearchPageState extends State<SummonerSearchPage> {
 
     setState(() {
       _isLoading = true;
-      _result = '';
     });
 
     try {
-      final data = await _apiService.getSummonerByName(name, tag);
-      setState(() {
-        _result = '''
-        닉네임: ${data['gameName']}
-        태그: ${data['tagLine']}
-        PUUID: ${data['puuid']}
-        ''';
-      });
+      // 1단계: Riot ID로 puuid 조회
+      final account = await _apiService.getSummonerByName(name, tag);
+      final puuid = account['puuid'];
+
+      // 2단계: puuid로 Summoner 정보 조회
+      final summoner = await _apiService.getSummonerInfo(puuid);
+      summoner['name'] = '$name#$tag';
+
+      // 3단계: matchId 조회 + 상세 경기 정보 조회
+      final matchIds = await _apiService.getMatchIds(puuid);
+      final matchDetails = await _apiService.getMatchDetails(matchIds);
+
+      // 4단계: 결과 페이지로 이동
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              SummonerResultPage(
+                summoner: summoner,
+                matchHistory: matchDetails,
+              ),
+        ),
+      );
     } catch (e) {
-      setState(() {
-        _result = '에러 발생: $e';
-      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('에러 발생: $e')),
+      );
     } finally {
       setState(() {
         _isLoading = false;
