@@ -4,8 +4,8 @@ import 'package:project/api/RiotApiService.dart';
 import 'package:project/page/SummonerResultPage.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // 생략되어 있었다면 추가!
-  await dotenv.load(fileName: ".env");       // 반드시 await 사용
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Color(0xFF00B4D8),
+            backgroundColor: const Color(0xFF00B4D8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -50,66 +50,53 @@ class SummonerSearchPage extends StatefulWidget {
 }
 
 class _SummonerSearchPageState extends State<SummonerSearchPage> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _tagController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _tagController = TextEditingController();
   final RiotApiService _apiService = RiotApiService();
 
-  String _result = '';
   bool _isLoading = false;
 
-  void _search() async {
+  Future<void> _search() async {
     final name = _nameController.text.trim();
     final tag = _tagController.text.trim();
 
     if (name.isEmpty || tag.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('소환사 이름과 태그를 모두 입력해주세요.')),
-      );
+      _showSnackBar('소환사 이름과 태그를 모두 입력해주세요.');
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
-      // 1단계: Riot ID로 puuid 조회
       final account = await _apiService.getSummonerByName(name, tag);
       final puuid = account['puuid'];
 
-      // 2단계: puuid로 Summoner 정보 조회
       final summoner = await _apiService.getSummonerInfo(puuid);
-      summoner['name'] = '$name#$tag';
-
-      // 3단계: matchId 조회 + 상세 경기 정보 조회
-      final matchIds = await _apiService.getMatchIds(puuid);
-      final matchDetails = await _apiService.getMatchDetails(matchIds);
+      summoner['name'] = '$name#$tag'; // 사용자 식별용 이름
 
       final rankInfo = await _apiService.getRankInfo(puuid);
 
-      // 4단계: 결과 페이지로 이동
       if (!mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              SummonerResultPage(
-                summoner: summoner,
-                matchHistory: matchDetails,
-                rankInfo: rankInfo,
-              ),
+          builder: (context) => SummonerResultPage(
+            summoner: summoner,
+            rankInfo: rankInfo,
+            riotApiService: _apiService,
+          ),
         ),
       );
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('에러 발생: $e')),
-      );
+      _showSnackBar('에러 발생: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
+  }
+
+  void _showSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -123,11 +110,7 @@ class _SummonerSearchPageState extends State<SummonerSearchPage> {
             children: [
               const Text(
                 'SummonerTrack',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
               ),
               const SizedBox(height: 40),
               TextField(
@@ -156,16 +139,10 @@ class _SummonerSearchPageState extends State<SummonerSearchPage> {
                     ? const SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                 )
                     : const Text('검색'),
               ),
-              const SizedBox(height: 30),
-              if (_result.isNotEmpty)
-                Text(_result, style: const TextStyle(fontSize: 14)),
               const Spacer(),
               const Text(
                 'Powered by Riot Games API',

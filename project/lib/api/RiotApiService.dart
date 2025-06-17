@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -61,7 +59,7 @@ class RiotApiService {
   // 엔트리 정보 가져오기
   Future<List<Map<String, dynamic>>> getRankInfo(String puuid) async {
     try {
-      final response = await _dioKr.get('/lol/league/v4/entries/by-puuid/$puuid}');
+      final response = await _dioKr.get('/lol/league/v4/entries/by-puuid/$puuid');
 
       return List<Map<String, dynamic>>.from(response.data);
     } on DioException catch (e) {
@@ -70,16 +68,16 @@ class RiotApiService {
   }
 
   // 소환사 매치 정보 가져오기
-  Future<List<String>> getMatchIds(String puuid) async{
+  Future<List> getMatchIds(String puuid, {int start = 0, int count = 5}) async {
     try {
-      final response = await _dioAsia.get('/lol/match/v5/matches/by-puuid/${puuid}/ids');
-
-      return List<String>.from(response.data);
+      final response = await _dioAsia.get(
+        '/lol/match/v5/matches/by-puuid/$puuid/ids?start=$start&count=$count',
+      );
+      return List.from(response.data);
     } on DioException catch (e) {
-      throw Exception('API 호출 실패 (${e.response?.statusCode ?? 0}): ${e.message}');
+      throw Exception('getMatchIds 실패 (${e.response?.statusCode ?? 0}): ${e.message}');
     }
   }
-
   // 게임 내역 가져오기
   Future<Map<String, dynamic>> getMatchDetail(String matchId) async {
     try {
