@@ -17,6 +17,19 @@ class MatchCard extends StatefulWidget {
 
 class _MatchCardState extends State<MatchCard> {
   bool _isExpanded = false;
+  final Map<String, String> spellMap = {
+    "1": "SummonerBoost",
+    "3": "SummonerExhaust",
+    "4": "SummonerFlash",
+    "6": "SummonerHaste",
+    "7": "SummonerHeal",
+    "11": "SummonerSmite",
+    "12": "SummonerTeleport",
+    "13": "SummonerMana",
+    "14": "SummonerIgnite",
+    "21": "SummonerBarrier",
+    "32": "SummonerSnowball",
+  };
 
   void _toggleExpanded() {
     setState(() {
@@ -124,6 +137,11 @@ class _MatchCardState extends State<MatchCard> {
 
     final itemIds = List.generate(7, (i) => userData['item$i'] ?? 0);
 
+    final spell1Id = userData['summoner1Id'].toString();
+    final spell2Id = userData['summoner2Id'].toString();
+    final spell1Img = spellMap[spell1Id];
+    final spell2Img = spellMap[spell2Id];
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -142,6 +160,24 @@ class _MatchCardState extends State<MatchCard> {
                   backgroundColor: Colors.black87,
                   child: Text('$level', style: const TextStyle(color: Colors.white, fontSize: 10)),
                 ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                if (spell1Img != null)
+                  Image.network(
+                    'https://ddragon.leagueoflegends.com/cdn/15.11.1/img/spell/$spell1Img.png',
+                    width: 22,
+                    height: 22,
+                  ),
+                const SizedBox(width: 4),
+                if (spell2Img != null)
+                  Image.network(
+                    'https://ddragon.leagueoflegends.com/cdn/15.11.1/img/spell/$spell2Img.png',
+                    width: 22,
+                    height: 22,
+                  ),
               ],
             ),
             const SizedBox(height: 4),
